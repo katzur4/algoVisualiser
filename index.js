@@ -3,6 +3,31 @@ const array = [];
 
 init();
 //populate the array
+
+let audioCtx = null;
+
+function playNote(freq){
+    if(audioCtx === null){
+        audioCtx = new (
+            AudioContext ||
+            webkitAudioContext ||
+            window.webkitAudioContext
+        )();
+    }
+    const dur = 0.1;
+    const osc = audioCtx.createOscillator();
+    osc.frequency.value = freq;
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur);
+
+    const node = audioCtx.createGain();
+    node.gain.value = 0.1;
+    node.gain.linearRampToValueAtTime(0, audioCtx.currentTime + dur);
+    osc.connect(node);
+    node.connect(audioCtx.destination);
+
+}
+
 function init(){
     for(let i = 0; i < n; i++){
         array[i] = Math.floor(Math.random()*100);
@@ -18,9 +43,10 @@ function bubbleSort(array){
     do{
         swapped = false;
         for (let i = 1; i < array.length; i++){
+            moves.push({indeces:[i-1, i],type:"comp"});
             if(array[i-1] > array[i]){
                 swapped = true;
-                moves.push([i-1, i]);
+                moves.push({indeces:[i-1, i],type:"swap"});
                 [array[i-1], array[i]] = [array[i], array[i-1]];
                 
             }
@@ -30,7 +56,7 @@ function bubbleSort(array){
 }
 
 
-function showbars(indeces){
+function showbars(move){
     container.innerHTML ="";
     for(let i = 0; i < n; i++){
         // const barLabel = document.createElement("p");
@@ -41,8 +67,9 @@ function showbars(indeces){
         bar.style.height = array[i]+"%";
         bar.classList.add("bar");
 
-        if(indeces && indeces.includes(i)){
-            bar.style.backgroundColor = "red";
+        if(move && move.indeces.includes(i)){
+            bar.style.backgroundColor = 
+                move.type === "swap" ? "red" : "blue";
         }
         container.appendChild(bar);
     }
@@ -59,10 +86,17 @@ function animate(moves){
         showbars();
         return;
     }
-    const [i,j] = moves.shift();
-    [array[i],array[j]] = [array[j], array[i]];
-    showbars([i,j]);
+    const move = moves.shift();
+    const [i,j] = move.indeces;
+    
+    if(move.type === "swap"){
+        [array[i],array[j]] = [array[j], array[i]];
+    }
+
+    playNote(200 + array [i] * 5);
+    playNote(200 + array [j] * 5);
+    showbars(move);
     setTimeout(()=>{
         animate(moves);
-    },1000)
+    },100)
 }
